@@ -1,0 +1,1 @@
+Image saved as base64 encoded data. This will be loaded at runtime.

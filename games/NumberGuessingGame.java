@@ -94,10 +94,11 @@ public class NumberGuessingGame extends JFrame {
         // Submit button
         submitButton = new JButton("Submit Guess");
         submitButton.setFont(new Font("Arial", Font.BOLD, 14));
-        submitButton.setBackground(new Color(120, 180, 120)); // Soft green
+        submitButton.setBackground(new Color(100, 160, 100)); // Darker green
         submitButton.setForeground(Color.WHITE);
         submitButton.setFocusPainted(false);
-        submitButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        submitButton.setOpaque(true);
+        submitButton.setBorder(BorderFactory.createRaisedBevelBorder());
         submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         submitButton.addActionListener(this::handleGuess);
         gbc.gridy = 5;
@@ -106,10 +107,11 @@ public class NumberGuessingGame extends JFrame {
         // Back button
         backButton = new JButton("Back to Dashboard");
         backButton.setFont(new Font("Arial", Font.BOLD, 12));
-        backButton.setBackground(new Color(220, 100, 100)); // Soft red
+        backButton.setBackground(new Color(200, 60, 60)); // Darker red
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
-        backButton.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+        backButton.setOpaque(true);
+        backButton.setBorder(BorderFactory.createRaisedBevelBorder());
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         backButton.addActionListener(e -> goBack());
         gbc.gridy = 6;

@@ -30,7 +30,7 @@ public class TicTacToeGame extends JFrame {
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        mainPanel.setBackground(new Color(245, 245, 247)); // Soft light
+        mainPanel.setBackground(new Color(207, 140, 140)); // Rose/Mauve background
 
         // Top panel with title
         JLabel titleLabel = new JLabel("Tic Tac Toe");
@@ -79,19 +79,21 @@ public class TicTacToeGame extends JFrame {
 
         resetButton = new JButton("New Game");
         resetButton.setFont(new Font("Arial", Font.BOLD, 12));
-        resetButton.setBackground(new Color(120, 180, 120)); // Soft green
+        resetButton.setBackground(new Color(100, 160, 100)); // Darker green
         resetButton.setForeground(Color.WHITE);
         resetButton.setFocusPainted(false);
-        resetButton.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
+        resetButton.setOpaque(true);
+        resetButton.setBorder(BorderFactory.createRaisedBevelBorder());
         resetButton.addActionListener(e -> resetGame());
         buttonPanel.add(resetButton);
 
         backButton = new JButton("Back to Dashboard");
         backButton.setFont(new Font("Arial", Font.BOLD, 12));
-        backButton.setBackground(new Color(220, 100, 100)); // Soft red
+        backButton.setBackground(new Color(200, 60, 60)); // Darker red
         backButton.setForeground(Color.WHITE);
         backButton.setFocusPainted(false);
-        backButton.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
+        backButton.setOpaque(true);
+        backButton.setBorder(BorderFactory.createRaisedBevelBorder());
         backButton.addActionListener(e -> goBack());
         buttonPanel.add(backButton);
 

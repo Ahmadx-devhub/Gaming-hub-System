@@ -49,10 +49,11 @@ public class Dashboard extends JFrame {
 
         JButton logoutButton = new JButton("Logout");
         logoutButton.setFont(new Font("Arial", Font.BOLD, 12));
-        logoutButton.setBackground(new Color(220, 100, 100)); // Soft red
+        logoutButton.setBackground(new Color(200, 60, 60)); // Darker red
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
-        logoutButton.setBorder(BorderFactory.createEmptyBorder(6, 15, 6, 15));
+        logoutButton.setOpaque(true);
+        logoutButton.setBorder(BorderFactory.createRaisedBevelBorder());
         logoutButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         logoutButton.addActionListener(e -> handleLogout());
         infoPanel.add(logoutButton);
@@ -108,9 +109,72 @@ public class Dashboard extends JFrame {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(backgroundColor);
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-                super.paintComponent(g);
+                
+                // Draw Tic Tac Toe board for TicTacToe game
+                if (gameClass.equals("TicTacToe")) {
+                    drawTicTacToePanelBackground(g2d);
+                } else {
+                    // For other games, use background color
+                    g2d.setColor(backgroundColor);
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                    super.paintComponent(g);
+                }
+            }
+            
+            private void drawTicTacToePanelBackground(Graphics2D g2d) {
+                // Fill entire panel with the rose/mauve background
+                g2d.setColor(new Color(207, 140, 140)); // Tic Tac Toe rose/mauve color
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+                
+                // Draw title
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(new Font("Arial", Font.BOLD, 32));
+                FontMetrics fm = g2d.getFontMetrics();
+                String title = "Tic Tac Toe";
+                int titleX = (getWidth() - fm.stringWidth(title)) / 2;
+                int titleY = getHeight() / 3;
+                g2d.drawString(title, titleX, titleY);
+                
+                // Draw large tic tac toe board
+                int boardSize = Math.min(getWidth(), getHeight()) / 2;
+                int cellSize = boardSize / 3;
+                int startX = (getWidth() - boardSize) / 2;
+                int startY = titleY + 40;
+                
+                g2d.setColor(Color.WHITE);
+                g2d.setStroke(new BasicStroke(3));
+                
+                // Draw grid lines
+                for (int i = 1; i < 3; i++) {
+                    g2d.drawLine(startX, startY + i * cellSize, startX + boardSize, startY + i * cellSize);
+                    g2d.drawLine(startX + i * cellSize, startY, startX + i * cellSize, startY + boardSize);
+                }
+                
+                // Draw X's and O's in pattern from the image
+                // Top row: X, empty, O
+                drawX(g2d, startX + cellSize / 2, startY + cellSize / 2, cellSize / 4);
+                drawO(g2d, startX + boardSize - cellSize / 2, startY + cellSize / 2, cellSize / 4);
+                
+                // Middle row: O, X, O
+                drawO(g2d, startX + cellSize / 2, startY + cellSize + cellSize / 2, cellSize / 4);
+                drawX(g2d, startX + boardSize - cellSize / 2, startY + cellSize + cellSize / 2, cellSize / 4);
+                
+                // Bottom row: X, O, X
+                drawX(g2d, startX + cellSize / 2, startY + 2 * cellSize + cellSize / 2, cellSize / 4);
+                drawO(g2d, startX + boardSize - cellSize / 2, startY + 2 * cellSize + cellSize / 2, cellSize / 4);
+            }
+            
+            private void drawX(Graphics2D g2d, int x, int y, int size) {
+                g2d.setColor(new Color(220, 80, 80)); // Red X
+                g2d.setStroke(new BasicStroke(3));
+                g2d.drawLine(x - size, y - size, x + size, y + size);
+                g2d.drawLine(x - size, y + size, x + size, y - size);
+            }
+            
+            private void drawO(Graphics2D g2d, int x, int y, int size) {
+                g2d.setColor(Color.BLACK);
+                g2d.setStroke(new BasicStroke(3));
+                g2d.drawOval(x - size, y - size, size * 2, size * 2);
             }
         };
 

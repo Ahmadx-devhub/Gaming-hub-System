@@ -1,15 +1,24 @@
 package database;
 
 import java.sql.*;
+import java.io.File;
 
 public class DatabaseManager {
-    private static final String DB_URL = "jdbc:sqlite:gaming_hub.db";
+    private static final String DB_PATH = System.getProperty("user.home") + File.separator + "Gaming-Hub" + File.separator + "gaming_hub.db";
+    private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
     private static Connection connection;
 
     public static void initialize() {
         try {
+            // Create directory if it doesn't exist
+            File dbDir = new File(System.getProperty("user.home") + File.separator + "Gaming-Hub");
+            if (!dbDir.exists()) {
+                dbDir.mkdirs();
+            }
+            
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection(DB_URL);
+            connection.setAutoCommit(true);
             createTables();
         } catch (ClassNotFoundException e) {
             System.err.println("SQLite JDBC driver not found: " + e.getMessage());
