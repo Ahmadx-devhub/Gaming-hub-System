@@ -3,6 +3,7 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import database.DatabaseManager;
 import services.AuthenticationService;
 
 public class LoginPage extends JFrame {
@@ -13,148 +14,158 @@ public class LoginPage extends JFrame {
     private JLabel statusLabel;
 
     public LoginPage() {
-        setTitle("Gaming Hub - Login");
+        setTitle("Gaming Hub — Sign in");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(550, 500);
+        setMinimumSize(new Dimension(560, 560));
+        setSize(620, 640);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
-        // Main panel with soft background
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(new Color(248, 249, 250)); // Modern light background
-        mainPanel.setLayout(new GridBagLayout());
+        JPanel root = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                GameHubTheme.paintHubGradient((Graphics2D) g, getWidth(), getHeight());
+            }
+        };
+        root.setOpaque(true);
+
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setOpaque(true);
+        card.setBackground(GameHubTheme.BG_CARD);
+        card.setBorder(GameHubTheme.neonCardPadding(28, 36, 32, 36));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(15, 25, 15, 25);
-
-        // Title
-        JLabel titleLabel = new JLabel("Gaming Hub");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 40));
-        titleLabel.setForeground(new Color(20, 30, 60)); // Professional dark blue
         gbc.gridx = 0;
-        gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
-        mainPanel.add(titleLabel, gbc);
+        int y = 0;
 
-        // Subtitle
-        JLabel subtitleLabel = new JLabel("Welcome Back");
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subtitleLabel.setForeground(new Color(120, 120, 128)); // Medium gray
-        gbc.gridy = 1;
-        gbc.insets = new Insets(5, 25, 25, 25);
-        mainPanel.add(subtitleLabel, gbc);
+        if (!DatabaseManager.isReady()) {
+            String err = DatabaseManager.getLastInitError();
+            String msg = "Database offline.\n\n"
+                    + (err != null ? err + "\n\n" : "")
+                    + "The app can download the driver once, or add sqlite-jdbc-3.43.0.0.jar to the classpath (see build.sh).";
+            JTextArea dbWarn = GameHubTheme.createWrappedNotice(msg, GameHubTheme.TEXT_ERROR);
+            gbc.gridy = y++;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1;
+            gbc.insets = new Insets(0, 4, 12, 4);
+            card.add(dbWarn, gbc);
+            gbc.weightx = 0;
+            gbc.fill = GridBagConstraints.NONE;
+        }
 
-        // Username label and field
-        JLabel usernameLabel = new JLabel("Username:");
-        usernameLabel.setForeground(new Color(50, 50, 60));
-        usernameLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
+        JLabel badge = GameHubTheme.createHudBadge("Player login");
+        gbc.gridy = y++;
+        gbc.insets = new Insets(0, 8, 12, 8);
+        card.add(badge, gbc);
+
+        JPanel titleRow = GameHubTheme.createBrandTitleRow();
+        gbc.gridy = y++;
+        gbc.insets = new Insets(0, 8, 6, 8);
+        card.add(titleRow, gbc);
+
+        JLabel subtitleLabel = new JLabel("<html><center>Your scores and play time stay on this device.</center></html>");
+        subtitleLabel.setFont(GameHubTheme.fontSubtitle());
+        subtitleLabel.setForeground(GameHubTheme.TEXT_MUTED);
+        subtitleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridy = y++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(0, 8, 20, 8);
+        card.add(subtitleLabel, gbc);
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(15, 25, 8, 25);
-        mainPanel.add(usernameLabel, gbc);
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setForeground(GameHubTheme.TEXT_MUTED);
+        usernameLabel.setFont(GameHubTheme.fontCaption());
+        gbc.gridy = y++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(8, 8, 4, 8);
+        card.add(usernameLabel, gbc);
 
-        usernameField = new JTextField(20);
-        usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        usernameField.setBackground(new Color(255, 255, 255));
-        usernameField.setForeground(new Color(20, 20, 25));
-        usernameField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 221, 225), 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
-        usernameField.setCaretColor(new Color(80, 150, 220));
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 25, 15, 25);
-        mainPanel.add(usernameField, gbc);
+        usernameField = new JTextField(24);
+        GameHubTheme.styleTextField(usernameField);
+        gbc.gridy = y++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 8, 12, 8);
+        card.add(usernameField, gbc);
 
-        // Password label and field
-        JLabel passwordLabel = new JLabel("Password:");
-        passwordLabel.setForeground(new Color(50, 50, 60));
-        passwordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        gbc.gridy = 4;
-        gbc.insets = new Insets(15, 25, 8, 25);
-        mainPanel.add(passwordLabel, gbc);
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setForeground(GameHubTheme.TEXT_MUTED);
+        passwordLabel.setFont(GameHubTheme.fontCaption());
+        gbc.gridy = y++;
+        gbc.insets = new Insets(4, 8, 4, 8);
+        card.add(passwordLabel, gbc);
 
-        passwordField = new JPasswordField(20);
-        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        passwordField.setBackground(new Color(255, 255, 255));
-        passwordField.setForeground(new Color(20, 20, 25));
-        passwordField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 221, 225), 1),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
-        passwordField.setCaretColor(new Color(80, 150, 220));
-        gbc.gridy = 5;
-        gbc.insets = new Insets(0, 25, 15, 25);
-        mainPanel.add(passwordField, gbc);
+        passwordField = new JPasswordField(24);
+        GameHubTheme.styleTextField(passwordField);
+        gbc.gridy = y++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 8, 8, 8);
+        card.add(passwordField, gbc);
 
-        // Status label
-        statusLabel = new JLabel("");
-        statusLabel.setForeground(new Color(200, 70, 80));
-        statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
+        statusLabel = new JLabel(" ");
+        statusLabel.setFont(GameHubTheme.fontCaption());
+        statusLabel.setForeground(GameHubTheme.TEXT_ERROR);
+        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gbc.gridy = y++;
         gbc.anchor = GridBagConstraints.CENTER;
-        gbc.insets = new Insets(10, 25, 10, 25);
-        mainPanel.add(statusLabel, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(4, 8, 8, 8);
+        card.add(statusLabel, gbc);
+        gbc.weightx = 0;
 
-        // Button Panel
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 15, 0));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 14, 0));
         buttonPanel.setOpaque(false);
 
-        // Login button
-        loginButton = createModernButton("Login", new Color(59, 130, 246), new Color(37, 99, 235));
+        loginButton = GameHubTheme.createPillButton("Sign in", GameHubTheme.ACCENT_CYAN, GameHubTheme.ACCENT_CYAN_DIM);
         loginButton.addActionListener(this::handleLogin);
         buttonPanel.add(loginButton);
 
-        // Register button
-        registerButton = createModernButton("Register", new Color(34, 197, 94), new Color(22, 163, 74));
+        registerButton = GameHubTheme.createPillButton("Create account", GameHubTheme.ACCENT_MAGENTA, new Color(220, 50, 150));
+        registerButton.setForeground(GameHubTheme.TEXT_PRIMARY);
         registerButton.addActionListener(this::handleRegister);
         buttonPanel.add(registerButton);
 
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(25, 25, 25, 25);
-        mainPanel.add(buttonPanel, gbc);
+        gbc.gridy = y++;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(12, 8, 0, 8);
+        card.add(buttonPanel, gbc);
 
-        add(mainPanel);
+        JLabel hint = new JLabel("Press Enter to sign in");
+        hint.setFont(GameHubTheme.fontCaption());
+        hint.setForeground(GameHubTheme.TEXT_MUTED);
+        gbc.gridy = y++;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(14, 8, 0, 8);
+        card.add(hint, gbc);
+
+        JPanel centerWrap = new JPanel(new GridBagLayout());
+        centerWrap.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(20, 24, 24, 24);
+        centerWrap.add(card, c);
+
+        root.add(centerWrap, BorderLayout.CENTER);
+
+        add(root);
+        getRootPane().setDefaultButton(loginButton);
         setVisible(true);
-    }
-
-    private JButton createModernButton(String text, Color normalColor, Color hoverColor) {
-        JButton button = new JButton(text) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(getBackground());
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                super.paintComponent(g);
-            }
-        };
-        button.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        button.setForeground(Color.WHITE);
-        button.setBackground(normalColor);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(hoverColor);
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(normalColor);
-            }
-        });
-
-        return button;
+        SwingUtilities.invokeLater(() -> usernameField.requestFocusInWindow());
     }
 
     private void handleLogin(ActionEvent e) {
@@ -162,16 +173,25 @@ public class LoginPage extends JFrame {
         String password = new String(passwordField.getPassword());
 
         if (username.isEmpty() || password.isEmpty()) {
-            statusLabel.setText("Please fill in all fields");
+            statusLabel.setForeground(GameHubTheme.TEXT_ERROR);
+            statusLabel.setText("Please enter both username and password.");
+            return;
+        }
+
+        if (!DatabaseManager.isReady()) {
+            String err = DatabaseManager.getLastInitError();
+            statusLabel.setForeground(GameHubTheme.TEXT_ERROR);
+            statusLabel.setText(err != null ? err : "Database offline — cannot sign in.");
             return;
         }
 
         if (AuthenticationService.login(username, password)) {
-            statusLabel.setText("");
+            statusLabel.setText(" ");
             dispose();
             new Dashboard();
         } else {
-            statusLabel.setText("Invalid username or password");
+            statusLabel.setForeground(GameHubTheme.TEXT_ERROR);
+            statusLabel.setText("Invalid username or password.");
             passwordField.setText("");
         }
     }

@@ -1,6 +1,7 @@
 package games;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Random;
@@ -9,6 +10,7 @@ import models.GameScore;
 import database.GameScoreDAO;
 import database.UserDAO;
 import gui.Dashboard;
+import gui.GameHubTheme;
 
 public class NumberGuessingGame extends JFrame {
     private int secretNumber;
@@ -21,180 +23,204 @@ public class NumberGuessingGame extends JFrame {
     private JButton backButton;
     private JLabel attemptsLabel;
     private JLabel scoreLabel;
+    private JProgressBar attemptBar;
     private boolean gameOver = false;
-    private final int MAX_ATTEMPTS = 10;
+    private final int maxAttempts = 10;
 
     public NumberGuessingGame() {
-        setTitle("Number Guessing Game");
+        setTitle("Gaming Hub — Number Guess");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(500, 500);
+        setMinimumSize(new Dimension(500, 520));
+        setSize(560, 600);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
         startTime = System.currentTimeMillis();
         secretNumber = new Random().nextInt(100) + 1;
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(new Color(245, 245, 247)); // Soft light background
-        mainPanel.setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        JPanel root = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                GameHubTheme.paintHubGradient((Graphics2D) g, getWidth(), getHeight());
+            }
+        };
 
-        // Title
-        JLabel titleLabel = new JLabel("Number Guessing Game");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(40, 40, 45)); // Dark text
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setOpaque(true);
+        card.setBackground(GameHubTheme.BG_CARD);
+        card.setBorder(GameHubTheme.neonCardPadding(26, 30, 26, 30));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridwidth = 2;
+
+        JPanel titleRow = GameHubTheme.createTwoWordTitle(
+                "NUMBER", GameHubTheme.ACCENT_AMBER,
+                "GUESS", GameHubTheme.TEXT_PRIMARY,
+                22);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        mainPanel.add(titleLabel, gbc);
+        card.add(titleRow, gbc);
 
-        // Instructions
-        JLabel instrLabel = new JLabel("Guess a number between 1 and 100");
-        instrLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        instrLabel.setForeground(new Color(100, 100, 105)); // Medium gray
+        JLabel instrLabel = new JLabel("Pick a number from 1 to 100 — you have " + maxAttempts + " attempts");
+        instrLabel.setFont(GameHubTheme.fontSubtitle());
+        instrLabel.setForeground(GameHubTheme.TEXT_MUTED);
         gbc.gridy = 1;
-        mainPanel.add(instrLabel, gbc);
+        card.add(instrLabel, gbc);
 
-        // Score and attempts
-        scoreLabel = new JLabel("Score: " + score);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        scoreLabel.setForeground(new Color(120, 150, 180)); // Soft blue
-        gbc.gridx = 0;
+        scoreLabel = new JLabel("Best this run: 0");
+        scoreLabel.setFont(GameHubTheme.fontBodyBold());
+        scoreLabel.setForeground(GameHubTheme.ACCENT_CYAN);
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        mainPanel.add(scoreLabel, gbc);
+        gbc.anchor = GridBagConstraints.WEST;
+        card.add(scoreLabel, gbc);
 
-        attemptsLabel = new JLabel("Attempts: " + attempts + "/" + MAX_ATTEMPTS);
-        attemptsLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        attemptsLabel.setForeground(new Color(200, 120, 120)); // Soft red
+        attemptsLabel = new JLabel("Attempts: 0 / " + maxAttempts);
+        attemptsLabel.setFont(GameHubTheme.fontBodyBold());
+        attemptsLabel.setForeground(GameHubTheme.ACCENT_AMBER);
         gbc.gridx = 1;
-        mainPanel.add(attemptsLabel, gbc);
+        gbc.anchor = GridBagConstraints.EAST;
+        card.add(attemptsLabel, gbc);
 
-        // Message label
-        messageLabel = new JLabel("Enter your guess");
-        messageLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        messageLabel.setForeground(new Color(60, 60, 65)); // Dark gray
+        attemptBar = new JProgressBar(0, maxAttempts);
+        attemptBar.setValue(0);
+        attemptBar.setString("Attempts used");
+        GameHubTheme.styleGameProgressBar(attemptBar);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        mainPanel.add(messageLabel, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        card.add(attemptBar, gbc);
 
-        // Input field
-        guessField = new JTextField(10);
-        guessField.setFont(new Font("Arial", Font.PLAIN, 18));
-        guessField.setHorizontalAlignment(JTextField.CENTER);
-        guessField.setBackground(new Color(255, 255, 255)); // White
-        guessField.setForeground(new Color(30, 30, 35)); // Dark
-        guessField.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 205), 1));
-        guessField.addActionListener(this::handleGuess);
+        messageLabel = new JLabel("<html><body style='width:380px'>Type a number and press Enter.</body></html>");
+        messageLabel.setFont(GameHubTheme.fontBodyBold());
+        messageLabel.setForeground(GameHubTheme.TEXT_PRIMARY);
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
         gbc.gridy = 4;
-        mainPanel.add(guessField, gbc);
+        card.add(messageLabel, gbc);
 
-        // Submit button
-        submitButton = new JButton("Submit Guess");
-        submitButton.setFont(new Font("Arial", Font.BOLD, 14));
-        submitButton.setBackground(new Color(100, 160, 100)); // Darker green
-        submitButton.setForeground(Color.WHITE);
-        submitButton.setFocusPainted(false);
-        submitButton.setOpaque(true);
-        submitButton.setBorder(BorderFactory.createRaisedBevelBorder());
-        submitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        submitButton.addActionListener(this::handleGuess);
+        guessField = new JTextField(8);
+        guessField.setHorizontalAlignment(JTextField.CENTER);
+        GameHubTheme.styleTextField(guessField);
+        guessField.setFont(GameHubTheme.fontMono());
+        guessField.addActionListener(this::handleGuess);
         gbc.gridy = 5;
-        mainPanel.add(submitButton, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        card.add(guessField, gbc);
 
-        // Back button
-        backButton = new JButton("Back to Dashboard");
-        backButton.setFont(new Font("Arial", Font.BOLD, 12));
-        backButton.setBackground(new Color(200, 60, 60)); // Darker red
-        backButton.setForeground(Color.WHITE);
-        backButton.setFocusPainted(false);
-        backButton.setOpaque(true);
-        backButton.setBorder(BorderFactory.createRaisedBevelBorder());
-        backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JPanel row = new JPanel(new GridLayout(1, 2, 12, 0));
+        row.setOpaque(false);
+
+        submitButton = GameHubTheme.createPillButton("Submit guess", GameHubTheme.ACCENT_GREEN, new Color(52, 196, 132));
+        submitButton.addActionListener(this::handleGuess);
+        row.add(submitButton);
+
+        backButton = GameHubTheme.createGhostButton("Back to lobby");
         backButton.addActionListener(e -> goBack());
-        gbc.gridy = 6;
-        mainPanel.add(backButton, gbc);
+        row.add(backButton);
 
-        add(mainPanel);
+        gbc.gridy = 6;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        card.add(row, gbc);
+
+        JPanel wrap = new JPanel(new GridBagLayout());
+        wrap.setOpaque(false);
+        GridBagConstraints c = new GridBagConstraints();
+        c.weightx = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(16, 16, 16, 16);
+        wrap.add(card, c);
+
+        root.add(wrap, BorderLayout.CENTER);
+        root.setBorder(new EmptyBorder(16, 16, 16, 16));
+
+        add(root);
+        getRootPane().setDefaultButton(submitButton);
         setVisible(true);
-        guessField.requestFocus();
+        guessField.requestFocusInWindow();
     }
 
     private void handleGuess(ActionEvent e) {
-        if (gameOver) return;
+        if (gameOver) {
+            return;
+        }
 
         try {
             int guess = Integer.parseInt(guessField.getText().trim());
             guessField.setText("");
 
             if (guess < 1 || guess > 100) {
-                messageLabel.setText("Please enter a number between 1 and 100");
-                messageLabel.setForeground(new Color(200, 100, 100)); // Soft red
+                messageLabel.setForeground(GameHubTheme.TEXT_ERROR);
+                messageLabel.setText("Stay within 1 and 100.");
                 return;
             }
 
             attempts++;
-            attemptsLabel.setText("Attempts: " + attempts + "/" + MAX_ATTEMPTS);
+            attemptsLabel.setText("Attempts: " + attempts + " / " + maxAttempts);
+            attemptBar.setValue(attempts);
 
             if (guess == secretNumber) {
                 score = Math.max(0, 100 - (attempts * 10));
-                messageLabel.setText("Correct! You won! Score: " + score);
-                messageLabel.setForeground(new Color(100, 150, 100)); // Soft green
-                scoreLabel.setText("Score: " + score);
-                gameOver = true;
-                submitButton.setEnabled(false);
-                guessField.setEnabled(false);
-                saveScoreAndExit();
+                messageLabel.setForeground(GameHubTheme.TEXT_SUCCESS);
+                messageLabel.setText("Nailed it — +" + score + " points");
+                scoreLabel.setText("Best this run: " + score);
+                finishSession();
             } else if (guess < secretNumber) {
-                messageLabel.setText("Too low! Try higher");
-                messageLabel.setForeground(new Color(180, 150, 100)); // Soft orange
+                messageLabel.setForeground(GameHubTheme.ACCENT_AMBER);
+                messageLabel.setText("Higher than " + guess);
             } else {
-                messageLabel.setText("Too high! Try lower");
-                messageLabel.setForeground(new Color(180, 150, 100)); // Soft orange
+                messageLabel.setForeground(GameHubTheme.ACCENT_AMBER);
+                messageLabel.setText("Lower than " + guess);
             }
 
-            if (attempts >= MAX_ATTEMPTS && guess != secretNumber) {
-                messageLabel.setText("Game Over! The number was: " + secretNumber);
-                messageLabel.setForeground(new Color(200, 100, 100)); // Soft red
+            if (attempts >= maxAttempts && guess != secretNumber) {
+                messageLabel.setForeground(GameHubTheme.TEXT_ERROR);
+                messageLabel.setText("Out of tries — secret was " + secretNumber);
                 score = 0;
-                gameOver = true;
-                submitButton.setEnabled(false);
-                guessField.setEnabled(false);
-                saveScoreAndExit();
+                scoreLabel.setText("Best this run: 0");
+                finishSession();
             }
         } catch (NumberFormatException ex) {
-            messageLabel.setText("Please enter a valid number");
-            messageLabel.setForeground(new Color(200, 100, 100)); // Soft red
+            messageLabel.setForeground(GameHubTheme.TEXT_ERROR);
+            messageLabel.setText("Numbers only, please.");
         }
     }
 
-    private void saveScoreAndExit() {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                Thread.sleep(2000);
-                long playTime = System.currentTimeMillis() - startTime;
-                GameScore gameScore = new GameScore(
-                        AuthenticationService.getCurrentUser().getId(),
-                        "NumberGuessing",
-                        score,
-                        playTime
-                );
-                GameScoreDAO.saveGameScore(gameScore);
+    private void finishSession() {
+        gameOver = true;
+        submitButton.setEnabled(false);
+        guessField.setEnabled(false);
+        backButton.setEnabled(false);
 
-                int userId = AuthenticationService.getCurrentUser().getId();
-                int newTotalScore = AuthenticationService.getCurrentUser().getTotalScore() + score;
-                long newTotalPlayTime = AuthenticationService.getCurrentUser().getTotalPlayTime() + playTime;
-                UserDAO.updateUserStats(userId, newTotalPlayTime, newTotalScore);
+        Timer exitTimer = new Timer(1800, ev -> {
+            ((Timer) ev.getSource()).stop();
+            long playTime = System.currentTimeMillis() - startTime;
+            GameScore gameScore = new GameScore(
+                    AuthenticationService.getCurrentUser().getId(),
+                    "NumberGuessing",
+                    score,
+                    playTime
+            );
+            GameScoreDAO.saveGameScore(gameScore);
 
-                dispose();
-                Dashboard dashboard = new Dashboard();
-                dashboard.updateStats();
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
-            }
+            int userId = AuthenticationService.getCurrentUser().getId();
+            int newTotalScore = AuthenticationService.getCurrentUser().getTotalScore() + score;
+            long newTotalPlayTime = AuthenticationService.getCurrentUser().getTotalPlayTime() + playTime;
+            UserDAO.updateUserStats(userId, newTotalPlayTime, newTotalScore);
+
+            dispose();
+            Dashboard dashboard = new Dashboard();
+            dashboard.updateStats();
         });
+        exitTimer.setRepeats(false);
+        exitTimer.start();
     }
 
     private void goBack() {
